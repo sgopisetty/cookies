@@ -10,16 +10,94 @@ namespace cookies
             using var playwright = await Playwright.CreateAsync();
             var browser = await playwright.Chromium.LaunchAsync(new() { Headless = false });
             var context = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
-
+            
 
             {
                 var page = await context.NewPageAsync();
-                page.Response += OnResponseV2;
-                
+
+                await page.RouteAsync("**/*.js*", async route =>
+                {
+                    //Console.WriteLine("Intercepted: " + route.Request.Url);
+
+                    // You can abort, fulfill, or continue the request
+                    // For example, just continue the request
+                    //await route.AbortAsync();
+                    await route.ContinueAsync();
+                });
+
+                page.Request += async (_, request) =>
+                {
+                    await semaphore.WaitAsync();
+                    await Task.Delay(50);//breathing time
+                    var localPage = _ as IPage;
+                    var ctx = localPage.Context;
+                    var y = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var z = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var a = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var b = await ctx.CookiesAsync();
+
+
+                    if (true)
+                    {
+                        int i = 0;
+                    }
+
+                    semaphore.Release();
+                };
+
+                page.Response += async (_, response) =>
+                {
+                    await semaphore.WaitAsync();
+                    await Task.Delay(50);//breathing time
+                    var localPage = _ as IPage;
+                    var ctx = localPage.Context;
+                    var y = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var z = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var a = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var b = await ctx.CookiesAsync();
+
+
+                    if (true)
+                    {
+                        int i = 0;
+                    }
+
+                    semaphore.Release();
+                };
+               
+                page.RequestFinished += async (_, request) =>
+                {
+                    await semaphore.WaitAsync();
+                    await Task.Delay(50);//breathing time
+                    var localPage = _ as IPage;
+                    var ctx = localPage.Context;
+                    var y = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var z = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var a = await ctx.CookiesAsync();
+                    await Task.Delay(50);//breathing time
+                    var b = await ctx.CookiesAsync();
+
+
+                    if (true)
+                    {
+                        int i = 0;
+                    }
+
+                    semaphore.Release();
+                };
+
                 await page.GotoAsync("https://localhost:7280/sekhar");
                 //await Task.Delay(2000);
                 //await page.GotoAsync("https://localhost:7280/sekhar/privacy");
-                await Task.Delay(2000);
+                //await Task.Delay(2000);
 
                 //await page.GotoAsync("https://localhost:7280/home/index");
                 //await Task.Delay(2000);
@@ -176,7 +254,7 @@ namespace cookies
                 }
                 #endregion
 
-                await Task.Delay(3000);
+                await Task.Delay(10);
 
                 var laterList = await context.CookiesAsync();
                 //ReadCookies("Later:", laterList);
