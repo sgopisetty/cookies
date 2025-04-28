@@ -10,7 +10,8 @@ namespace cookies
             using var playwright = await Playwright.CreateAsync();
             var browser = await playwright.Chromium.LaunchAsync(new() { Headless = false });
             var context = await browser.NewContextAsync(new() { IgnoreHTTPSErrors = true });
-            
+
+            //bool interestingPartStarted = false;
 
             {
                 var page = await context.NewPageAsync();
@@ -18,7 +19,7 @@ namespace cookies
                 await page.RouteAsync("**/*.js*", async route =>
                 {
                     //Console.WriteLine("Intercepted: " + route.Request.Url);
-
+                    //interestingPartStarted = true;
                     // You can abort, fulfill, or continue the request
                     // For example, just continue the request
                     //await route.AbortAsync();
@@ -27,71 +28,52 @@ namespace cookies
 
                 page.Request += async (_, request) =>
                 {
-                    await semaphore.WaitAsync();
-                    await Task.Delay(50);//breathing time
-                    var localPage = _ as IPage;
-                    var ctx = localPage.Context;
-                    var y = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var z = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var a = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var b = await ctx.CookiesAsync();
-
-
-                    if (true)
+                    /*
+                    if (request.Url.Contains(".js"))
                     {
-                        int i = 0;
+                        await semaphore.WaitAsync();
+                        await Task.Delay(50);//breathing time
+                        var localPage = _ as IPage;
+                        var ctx = localPage.Context;
+                        var y = await ctx.CookiesAsync();
+                        semaphore.Release();
                     }
-
-                    semaphore.Release();
+                    */
                 };
 
                 page.Response += async (_, response) =>
                 {
-                    await semaphore.WaitAsync();
-                    await Task.Delay(50);//breathing time
-                    var localPage = _ as IPage;
-                    var ctx = localPage.Context;
-                    var y = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var z = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var a = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var b = await ctx.CookiesAsync();
-
-
-                    if (true)
+                    /*
+                    if (response.Url.Contains(".js"))
                     {
-                        int i = 0;
+                        await semaphore.WaitAsync();
+                        await Task.Delay(50);//breathing time
+                        var localPage = _ as IPage;
+                        var ctx = localPage?.Context;
+                        var y = await ctx.CookiesAsync();
+                       semaphore.Release();
                     }
+                    */
 
-                    semaphore.Release();
                 };
-               
+
+                page.Response += OnResponseV2;
+
                 page.RequestFinished += async (_, request) =>
                 {
-                    await semaphore.WaitAsync();
-                    await Task.Delay(50);//breathing time
-                    var localPage = _ as IPage;
-                    var ctx = localPage.Context;
-                    var y = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var z = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var a = await ctx.CookiesAsync();
-                    await Task.Delay(50);//breathing time
-                    var b = await ctx.CookiesAsync();
 
-
-                    if (true)
+                    if (request.Url.Contains(".js"))
                     {
-                        int i = 0;
+                        await semaphore.WaitAsync();
+                        await Task.Delay(500);//breathing time
+                        var localPage = _ as IPage;
+                        var ctx = localPage.Context;
+                        var y = await ctx.CookiesAsync();
+                        ReadCookies("Request_Finished: " + request.Url + ":\t", y);
+
+                        semaphore.Release();
                     }
 
-                    semaphore.Release();
                 };
 
                 await page.GotoAsync("https://localhost:7280/sekhar");
